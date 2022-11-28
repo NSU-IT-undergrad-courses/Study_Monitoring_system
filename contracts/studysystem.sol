@@ -32,25 +32,30 @@ contract Structs is Enums {
         uint8 month;
         uint8 day;
     }
+
     struct _Lesson {
         _Marks[30] marks;
         address[30] students;
         uint256 amount_marks;
         _Date date;
     }
+
     struct _CourseStudentList {
         _StudentStatus course_access;
         address student;
         uint256 average;
     }
+
     struct _TimePair {
         uint8 hour;
         uint8 minute;
     }
+
     struct _TimeTable {
         _TimePair start;
         _TimePair end;
     }
+
     struct _Course {
         uint256 average;
         string name;
@@ -127,7 +132,7 @@ contract CourseBinding is Enums, Structs, Modifiers {
         _;
     }
 
-    function addUser(address  new_user, _UserClass role)
+    function addUser(address new_user, _UserClass role)
     external
     isAdmin
     isNone(new_user)
@@ -174,13 +179,13 @@ contract CourseBinding is Enums, Structs, Modifiers {
     {
         uint256 course_id = course_name_id[course_name];
         uint256 student_id = getStudentid(course_name, student);
-        if (student_id == 0 && course_database[course_id].student_list[student_id].student != student){
+        if (student_id == 0 && course_database[course_id].student_list[student_id].student != student) {
             value = _StudentStatus.not_in_course_database;
         }
-        else{
-        value = course_database[course_id]
-        .student_list[student_id]
-        .course_access;
+        else {
+            value = course_database[course_id]
+            .student_list[student_id]
+            .course_access;
         }
     }
 
@@ -200,7 +205,7 @@ contract CourseBinding is Enums, Structs, Modifiers {
     external
     isCourseTeacher(course_name)
     {
-        _StudentStatus student_status = getStatus(course_name,student);
+        _StudentStatus student_status = getStatus(course_name, student);
         require(
             student_status != _StudentStatus.participant,
             "You are trying to give access to the student who is already in the course"
@@ -239,8 +244,8 @@ contract CourseBinding is Enums, Structs, Modifiers {
         if (current_status == _StudentStatus.allowed) {
             setStatus(msg.sender, course_name, _StudentStatus.participant);
         }
-        }
     }
+}
 
 contract LessonEdit is Modifiers, CourseBinding {
     function addLesson(string memory course_name, _Date memory date)
@@ -283,7 +288,7 @@ contract LessonEdit is Modifiers, CourseBinding {
                 return int256(i);
             }
         }
-        return -1;
+        return - 1;
     }
 
     function setMarks(
@@ -298,7 +303,7 @@ contract LessonEdit is Modifiers, CourseBinding {
     {
         uint256 course_id = course_name_id[course_name];
         int256 lesson_index_int = findLesson(course_name, date);
-        if (lesson_index_int != -1) {
+        if (lesson_index_int != - 1) {
             uint256 lesson_index = uint256(lesson_index_int);
             course_database[course_id].lessons[lesson_index].students[
             course_database[course_id]
@@ -328,7 +333,7 @@ contract GetMarks is Modifiers, CourseBinding, LessonEdit {
     ) public isCourseStudent(course_name, student) {
         uint256 course_id = course_name_id[course_name];
         int256 lesson_index_int = findLesson(course_name, date);
-        require((lesson_index_int > -1), "No lesson for that date and course");
+        require((lesson_index_int > - 1), "No lesson for that date and course");
         uint256 lesson_index = uint256(lesson_index_int);
         bool flag = false;
         for (
