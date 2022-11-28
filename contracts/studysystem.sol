@@ -71,7 +71,7 @@ contract Constructor is Structs {
 
     address public admin;
     mapping(address => _UserClass) public users;
-    _Course[200] course_database;
+    _Course[200] public course_database;
     uint256 amount_courses = 0;
     mapping(string => uint256) course_name_id;
 }
@@ -167,16 +167,21 @@ contract CourseBinding is Enums, Structs, Modifiers {
         return 0;
     }
 
-    function getStatus(address student, string memory course_name)
+    function getStatus(string memory course_name, address student)
     public
     view
     returns (_StudentStatus value)
     {
         uint256 course_id = course_name_id[course_name];
         uint256 student_id = getStudentid(course_name, student);
+        if (student_id == 0 && course_database[course_id].student_list[student_id].student != student){
+            value = _StudentStatus.not_in_course_database;
+        }
+        else{
         value = course_database[course_id]
         .student_list[student_id]
         .course_access;
+        }
     }
 
     function setStatus(
@@ -195,10 +200,10 @@ contract CourseBinding is Enums, Structs, Modifiers {
     external
     isCourseTeacher(course_name)
     {
-        _StudentStatus student_status = getStatus(student, course_name);
+        _StudentStatus student_status = getStatus(course_name,student);
         require(
             student_status != _StudentStatus.participant,
-            "Student is already in the course"
+            "You are trying to give access to the student who is already in the course"
         );
         uint256 course_id = course_name_id[course_name];
         if (student_status == _StudentStatus.not_in_course_database) {
@@ -206,10 +211,8 @@ contract CourseBinding is Enums, Structs, Modifiers {
             new_student.student = student;
             new_student.average = 0;
             new_student.course_access = _StudentStatus.allowed;
-            course_database[course_id].student_list[
-            course_database[course_id].amount_students
-            ] = new_student;
-            course_database[course_id].amount_students;
+            course_database[course_id].student_list[course_database[course_id].amount_students] = new_student;
+            course_database[course_id].amount_students++;
         }
         if (student_status == _StudentStatus.signed) {
             setStatus(student, course_name, _StudentStatus.participant);
@@ -218,7 +221,7 @@ contract CourseBinding is Enums, Structs, Modifiers {
 
     function signUp(string memory course_name) external isStudent {
         uint256 course_id = course_name_id[course_name];
-        _StudentStatus current_status = getStatus(msg.sender, course_name);
+        _StudentStatus current_status = getStatus(course_name, msg.sender);
         require(
             current_status != _StudentStatus.participant,
             "Student is already in the course"
@@ -227,19 +230,17 @@ contract CourseBinding is Enums, Structs, Modifiers {
             _CourseStudentList memory new_student;
             new_student.student = msg.sender;
             new_student.average = 0;
-            new_student.course_access = _StudentStatus.allowed;
+            new_student.course_access = _StudentStatus.signed;
             course_database[course_id].student_list[
             course_database[course_id].amount_students
             ] = new_student;
-            course_database[course_id].amount_students;
+            course_database[course_id].amount_students++;
         }
         if (current_status == _StudentStatus.allowed) {
             setStatus(msg.sender, course_name, _StudentStatus.participant);
-        } else {
-            setStatus(msg.sender, course_name, _StudentStatus.signed);
+        }
         }
     }
-}
 
 contract LessonEdit is Modifiers, CourseBinding {
     function addLesson(string memory course_name, _Date memory date)
@@ -263,7 +264,7 @@ contract LessonEdit is Modifiers, CourseBinding {
     }
 
     function findLesson(string memory course_name, _Date memory date)
-    internal
+    public
     view
     returns (int256)
     {
